@@ -1,0 +1,9 @@
+prometheus_tag: latest
+grafana_tag: latest
+
+prometheus_config_path: /containers_vols/prometheus/config/prometheus.yml
+grafana_config_path: /containers_vols/grafana/config/grafana.ini
+
+prometheus_data_path: /containers_vols/prometheus/data
+grafana_data_path: /containers_vols/grafana/data
+

@@ -1,0 +1,123 @@
+---
+- name: Create directory /containers_vols (solo su soufe1)
+  ansible.builtin.file:
+    path: /containers_vols
+    state: directory
+    mode: '0755'
+  become: true
+  when: "'soufe1' in group_names"
+
+
+- name: Create HAProxy directory (solo su soufe1)
+  ansible.builtin.file:
+    path: /containers_vols/haproxy
+    state: directory
+    mode: '0755'
+  become: true
+  when: "'soufe1' in group_names"
+
+- name: Create directory /containers_vols (solo su soube2)
+  ansible.builtin.file:
+    path: /containers_vols
+    state: directory
+    mode: '0755'
+  become: true
+  when: "'soube2' in group_names"
+
+
+- name: Create Prometheus data dir (solo su soube2)
+  ansible.builtin.file:
+    path: /containers_vols/prometheus/data
+    state: directory
+    mode: '0755'
+  become: true
+  when: "'soube2' in group_names"
+
+- name: Create Prometheus config dir (solo su soube2)
+  ansible.builtin.file:
+    path: /containers_vols/prometheus/config
+    state: directory
+    mode: '0755'
+  become: true
+  when: "'soube2' in group_names"
+
+- name: Create Grafana data dir (solo su soube2)
+  ansible.builtin.file:
+    path: /containers_vols/grafana/data
+    state: directory
+    mode: '0755'
+  become: true
+  when: "'soube2' in group_names"
+
+- name: Create Grafana config dir (solo su soube2)
+  ansible.builtin.file:
+    path: /containers_vols/grafana/config
+    state: directory
+    mode: '0755'
+  become: true
+  when: "'soube2' in group_names"
+
+# --- Copia template per configurazioni ---
+
+- name: Copy Prometheus configuration (solo su soube2)
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: /containers_vols/prometheus/config/prometheus.yml
+  become: true
+  when: "'soube2' in group_names"
+
+- name: Copy Grafana configuration (solo su soube2)
+  ansible.builtin.template:
+    src: grafana.ini.j2
+    dest: /containers_vols/grafana/config/grafana.ini
+  become: true
+  when: "'soube2' in group_names"
+
+- name: Copy HAProxy configuration (solo su soufe1)
+  ansible.builtin.template:
+    src: haproxy.cfg.j2
+    dest: /containers_vols/haproxy/haproxy.cfg
+  become: true
+  when: "'soufe1' in group_names"
+
+# --- Avvio container tramite Podman ---
+
+- name: Start HAProxy (solo su soufe1)
+  containers.podman.podman_container:
+    name: haproxy
+    image: haproxy:latest
+    volume:
+      - /containers_vols/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:z
+    ports:
+      - "8080:80"
+      - "8443:443"
+    state: started
+  become: true
+  when: "'soufe1' in group_names"
+
+- name: Start Prometheus (solo su soube2)
+  containers.podman.podman_container:
+    name: prometheus
+    image: prom/prometheus:latest
+    volume:
+      - /containers_vols/prometheus/config/prometheus.yml:/etc/prometheus/prometheus.yml:z
+      - /containers_vols/prometheus/data:/prometheus:z
+    ports:
+      - "9090:9090"
+    state: started
+  become: true
+  when: "'soube2' in group_names"
+
+- name: Start Grafana (solo su soube2)
+  containers.podman.podman_container:
+    name: grafana
+    image: grafana/grafana:latest
+    volume:
+      - /containers_vols/grafana/config/grafana.ini:/etc/grafana/grafana.ini:z
+      - /containers_vols/grafana/data:/var/lib/grafana:z
+    ports:
+      - "3000:3000"
+    state: started
+  become: true
+  when: "'soube2' in group_names"
+

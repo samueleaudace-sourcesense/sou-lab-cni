@@ -1,0 +1,10 @@
+- name: Configura soufe1
+  hosts: soufe1
+  roles:
+    - sou_podman
+
+- name: Configura soube2
+  hosts: soube2
+  roles:
+    - sou_podman
+
